@@ -3,10 +3,10 @@ def init():
     global help
     help = """
 You can use one of the following commands:
-    
+
 /start and /faq both result in this output
 /add to search for tracks. Searches can be refined using statements such as 'artist:'.
-/queue to view the list of upcoming tracks. 
+/queue to view the list of upcoming tracks.
 /history view the list of tracks that were played recently
 /dj <amount> to share some of your sats balance with another user. Use this command in a reply to them.
 
@@ -20,11 +20,13 @@ You can also chat in private with me to do stuff like viewing your balance.
 The /couple, /decouple, /setclientid and /setclientsecret are commands to connect your own music player to this bot and start your own Jukebox!
 
 If you like this bot, send a donation to herovk@ln.tips or simply /dj the bot.
-"""           
+"""
 
     # when someone executes the balance command in a group
     global balance_in_group
-    balance_in_group = "Like keeping your mnenomic seedphrase offline, it is better to query your balance in a private chat with me."
+    balance_in_group = (
+        "Like keeping your mnenomic seedphrase offline, it is better to query your balance in a private chat with me."
+    )
 
     # when someone executes the disconnect command in a private chat
     global disconnect_in_private_chat
@@ -36,7 +38,9 @@ If you like this bot, send a donation to herovk@ln.tips or simply /dj the bot.
 
     # when the spotify authorisation is removed
     global spotify_authorisation_removed
-    spotify_authorisation_removed = "Removed player from group. To reconnect, an admin should perform the /couple command to authorize the bot."
+    spotify_authorisation_removed = (
+        "Removed player from group. To reconnect, an admin should perform the /couple command to authorize the bot."
+    )
 
     global spotify_authorisation_removed_error
     spotify_authorisation_removed_error = "Removed player from group failed. Sorry. retry or dm the captain."
@@ -46,9 +50,9 @@ If you like this bot, send a donation to herovk@ln.tips or simply /dj the bot.
 
     global client_id_set
     client_id_set = "Spotify ClientID is set to {}"
-    
+
     global no_client_secret_set
-    no_client_secret_set = "No Spotify Client Secret set. Use the /setclientsecret command to enter this secret"        
+    no_client_secret_set = "No Spotify Client Secret set. Use the /setclientsecret command to enter this secret"
 
     global client_secret_set
     client_secret_set = "Spotify Client Secret is set"

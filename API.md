@@ -1,9 +1,13 @@
 # API documentation of the Lightning Jukebox Bot
+
 ## request current status
+
 ```
 GET https://<host>/jukebox/api/<chat id>/status
 ```
+
 The response is JSON formatted and looks like the following sample
+
 ```
 {
   "now":{
@@ -15,19 +19,27 @@ The response is JSON formatted and looks like the following sample
   "status":200
 }
 ```
+
 When there are tracks in the Queue, the response looks like the following
+
 ```
 
 ```
+
 ## Searching for tracks
+
 ```
 POST https://<host>/jukebox/api/<chat id>/search
 ```
+
 The contents of the body is JSON formatted like this:
+
 ```
 {"query":"rage"}
 ```
+
 The search response is JSON formatted like this:
+
 ```
 {
   "result": {
@@ -43,16 +55,23 @@ The search response is JSON formatted like this:
   "status":200
 }
 ```
+
 ## Requesting a track
+
 A track is requested by posting the track_id from the search result.
+
 ```
 POST https://<host>/jukebox/api/<chat id>/request
 ```
+
 The body of the request contains the track id.
+
 ```
 {"track_id":"1WWgMk8nD79p8VeKFGYrOw"}
 ```
+
 The response of the request is a JSON object that contains the Lightning invoice
+
 ```
 {
   "status":200,
@@ -64,19 +83,26 @@ The response of the request is a JSON object that contains the Lightning invoice
   }
 }
 ```
+
 ## Querying the status of a payment
+
 The status of an invoice can be requested executing the following request:
+
 ```
 GET https://<host>/jukebox/api/<chat_id>/payment/<payment_hash>
 ```
+
 The response of the request is a JSON object that contains the payment status
+
 ```
 {
   "status":402,
   "message":"Invoice not paid"
 }
 ```
+
 or when the invoice is paid
+
 ```
 {
   "status":200,
@@ -84,6 +110,6 @@ or when the invoice is paid
 }
 ```
 
-
+```
 
 ```

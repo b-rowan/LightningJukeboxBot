@@ -1,0 +1,6 @@
+# Telegram bot token
+bot_token: MY_TG_BOT_TOKEN
+# Bot domain
+domain: my_custom_domain
+# Bot ID
+bot_id: my_bot_id

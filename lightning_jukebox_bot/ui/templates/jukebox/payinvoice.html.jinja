@@ -1,0 +1,20 @@
+{% extends "base.html.jinja" %}
+{% block content %}
+    <div class="image-container">
+        <div class="image-content">
+            <img src="/jukebox/assets/jukeboxbot_payinvoice.png" alt="JukeboxBot" />
+            <div class="qr-code-container">
+                <img id="qr-code-image"
+                     alt="QR code image"
+                     invoice="{{ invoice.payment_request }}"
+                     paymenthash="{{ invoice.payment_hash }}">
+            </div>
+            <button class="copy-data" aria-label="Copy invoice"></button>
+            <pay-with-ln payment-request="{{ invoice.payment_request }}"></pay-with-ln>
+        </div>
+    </div>
+    <script src="{{ request.url_for('static', path='/js/jukebox/invoice.js') }}"></script>
+    <script src="https://unpkg.com/pay-with-ln@0.1.0/dist/pay-with-ln.js"
+            integrity="sha384-Uid8n0M8dpAoE1SOQOXOcMfDy9hvqtSp+A3xMFilQn+Z6fxsnmCayPVP8na5vdAv"
+            crossorigin="anonymous"></script>
+{% endblock content %}

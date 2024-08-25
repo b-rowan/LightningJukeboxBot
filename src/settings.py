@@ -1,11 +1,12 @@
-import redis
 import logging
-from lnbits import LNbits
 import os
 import random
 import string
 from time import time
 
+import redis
+
+from lnbits import LNbits
 
 
 def init():
@@ -30,13 +31,13 @@ def init():
     global donation_fee
     global superadmins
 
-    domain=os.environ['JUKEBOX_DOMAIN']
-    
+    domain = os.environ["JUKEBOX_DOMAIN"]
+
     # set the new environment and fall back to development
     env = None
-    if 'JUKEBOX_ENV' in os.environ:
-        env = os.environ['JUKEBOX_ENV']
-        
+    if "JUKEBOX_ENV" in os.environ:
+        env = os.environ["JUKEBOX_ENV"]
+
     # already initialised for this environment
     try:
         if environment == env:
@@ -50,46 +51,46 @@ def init():
     delete_message_timeout_long = 300
 
     # set secret token for telegram
-    secret_token = "".join(random.sample(string.ascii_letters,12))
-    spotify_redirect_uri=f'https://{domain}/spotify' # this must literaly match the config in spotify
+    secret_token = "".join(random.sample(string.ascii_letters, 12))
+    spotify_redirect_uri = f"https://{domain}/spotify"  # this must literaly match the config in spotify
     max_connections = 5
 
     # webserver port
     port = 7000
-    
+
     price = 21
     fund_max = 42000
     fund_min = price
     rds = redis.Redis(db=2)
     lnbits = LNbits(
-        os.environ['LNBITS_PROTOCOL'],
-        os.environ['LNBITS_HOST'],
-        os.environ['LNBITS_ADMINKEY'],
-        os.environ['LNBITS_INVOICEKEY'],
-        os.environ['LNBITS_USRKEY'])
-    bot_token=os.environ['BOT_TOKEN']
-    qrcode_path = '/tmp'
-    ipaddress = os.environ['BOT_IPADDRESS']
-    bot_id=int(os.environ['BOT_ID'])
+        os.environ["LNBITS_PROTOCOL"],
+        os.environ["LNBITS_HOST"],
+        os.environ["LNBITS_ADMINKEY"],
+        os.environ["LNBITS_INVOICEKEY"],
+        os.environ["LNBITS_USRKEY"],
+    )
+    bot_token = os.environ["BOT_TOKEN"]
+    qrcode_path = "/tmp"
+    ipaddress = os.environ["BOT_IPADDRESS"]
+    bot_id = int(os.environ["BOT_ID"])
     donation_fee = 21  # default donation fee
-    superadmins = [int(superadmin) for superadmin in os.environ['SUPERADMINS'].split(',')]
+    superadmins = [int(superadmin) for superadmin in os.environ["SUPERADMINS"].split(",")]
 
     environment = env
-    if env == 'production':    
+    if env == "production":
         logging.basicConfig(
             filename="logfile_{time}.dat".format(time=time()),
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            level=logging.INFO
+            level=logging.INFO,
         )
         return True
-    elif env == 'development':
+    elif env == "development":
         logging.basicConfig(
             filename="logfile.dat",
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            level=logging.INFO
+            level=logging.INFO,
         )
         return True
     else:
         print("unknown environment")
         quit()
-        

@@ -7,6 +7,7 @@ from telegram import Update
 
 from lightning_jukebox_bot.application import invoicing, spotify, telegram, users
 from lightning_jukebox_bot.ui.templates import templates
+
 from . import web
 
 router = APIRouter(prefix="/jukebox")

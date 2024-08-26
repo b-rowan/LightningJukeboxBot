@@ -2,7 +2,8 @@
 {% block content %}
     <div class="image-container">
         <div class="image-content">
-            <img src="/jukebox/assets/jukeboxbot_fund.png" alt="JukeboxBot" />
+            <img src="{{ request.url_for('static', path='/img/jukeboxbot_fund.png') }}"
+                 alt="JukeboxBot" />
             <div class="qr-code-container">
                 <img id="qr-code-image" alt="QR code image" lnurl="{{ lnurl }}">
             </div>

@@ -1,24 +1,25 @@
 {% extends "base.html.jinja" %}
 {% block content %}
-<form onsubmit="submitSearch(); return false;" action="">
-    <div class="image-container">
-      <div class="image-content">
-        <img src="/jukebox/assets/jukeboxbot_addmusic.png" alt="JukeboxBot" />
-        <div class="search-container">
-          <input name="query" value="" placeholder="Enter song title">
+    <form onsubmit="submitSearch(); return false;" action="">
+        <div class="image-container">
+            <div class="image-content">
+                <img src="{{ request.url_for('static', path='/img/jukeboxbot_addmusic.png') }}"
+                     alt="JukeboxBot" />
+                <div class="search-container">
+                    <input name="query" value="" placeholder="Enter song title">
+                </div>
+                <button class="search-button" type="submit" aria-label="Search"></button>
+                <div class="search-results-container">
+                    <div class="search-result-container"></div>
+                    <div class="search-result-container"></div>
+                    <div class="search-result-container"></div>
+                    <div class="search-result-container"></div>
+                    <div class="search-result-container"></div>
+                </div>
+            </div>
         </div>
-        <button class="search-button" type="submit" aria-label="Search"></button>
-        <div class="search-results-container">
-          <div class="search-result-container"></div>
-          <div class="search-result-container"></div>
-          <div class="search-result-container"></div>
-          <div class="search-result-container"></div>
-          <div class="search-result-container"></div>
-        </div>
-      </div>
-    </div>
-</form>
-<script>
+    </form>
+    <script>
 const req1 = new XMLHttpRequest();
 req1.onreadystatechange = function() {{
   if (this.readyState == 4 && this.status == 200) {{
@@ -55,5 +56,5 @@ req1.setRequestHeader("Content-Type", "application/json");
 req1.send(JSON.stringify({{query:document.getElementsByName("query")[0].value}}));
 }}
 
-</script>
+    </script>
 {% endblock content %}

@@ -1,8 +1,7 @@
 import logging
 
+from lightning_jukebox_bot.application import redis, users
 from lightning_jukebox_bot.settings import config
-
-from lightning_jukebox_bot.application import users, redis
 
 
 async def get_bot_stack() -> int:

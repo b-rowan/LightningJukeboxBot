@@ -3,12 +3,16 @@
     <div class="image-container">
         <div class="image-content">
             <img src="{{ request.url_for('static', path='/img/jukeboxbot_payinvoice.png') }}"
-                 alt="JukeboxBot" />
+                 alt="JukeboxBot"
+                 width="100%"
+                 height="100%" />
             <div class="qr-code-container">
                 <img id="qr-code-image"
                      alt="QR code image"
                      invoice="{{ invoice.payment_request }}"
-                     paymenthash="{{ invoice.payment_hash }}">
+                     paymenthash="{{ invoice.payment_hash }}"
+                     width="100%"
+                     height="100%" />
             </div>
             <button class="copy-data" aria-label="Copy invoice"></button>
             <pay-with-ln payment-request="{{ invoice.payment_request }}"></pay-with-ln>

@@ -21,12 +21,12 @@ qrCodeImage.addEventListener("click", () => {
 
 // get payment hash and check payment status
 const paymentHash = qrCodeImage.getAttribute("paymentHash");
-var xmlhttp = new XMLHttpRequest();
+const xmlhttp = new XMLHttpRequest();
 
 xmlhttp.onreadystatechange = function () {
-    if (this.readyState == 4) {
-        var result = JSON.parse(this.responseText);
-        if (result["paid"] == true) {
+    if (this.readyState === 4) {
+        const result = JSON.parse(this.responseText);
+        if (result.paid === true) {
             window.location.replace("/jukebox/assets/jukeboxbot_invoicepaid.html");
         }
     }

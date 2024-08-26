@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from typing import Optional
 
 import qrcode
 
@@ -92,7 +93,8 @@ async def get_group_owner(chat_id: int) -> User:
 
 
 async def delete_group_owner(chat_id: int) -> None:
-    data = redis.cache.hdel(f"group:{chat_id}", "owner")
+    # TODO: unused
+    data = redis.cache.hdel(f"group:{chat_id}", "owner")  # noqa: F841
 
 
 async def get_balance(user: User) -> int:
@@ -107,20 +109,20 @@ async def set_group_owner(chat_id: int, userid: int) -> None:
     data = redis.cache.hset(f"group:{chat_id}", "owner", userid)
 
 
-async def get_funding_lnurl(user: User) -> str:
+async def get_funding_lnurl(user: User) -> Optional[str]:
     """
     Return the funding LNURL
     """
     if user is None:
-        logging.info(f"User is None")
+        logging.info("User is None")
         return None
     if user.lnurlp is None:
-        logging.info(f"User.lnurlp is None")
+        logging.info("User.lnurlp is None")
         return None
 
     logging.info(f"Get funding URL for {user.lnurlp}")
 
-    result = re.search(".*\/([A-Za-z0-9]+)", user.lnurlp)
+    result = re.search(".*\/([A-Za-z0-9]+)", user.lnurlp)  # noqa: W605
     if result:
         payid = result.groups()[0]
         details = await config.lnbits.getLnurlp(f"https://{config.domain}/", user.invoicekey, payid)
@@ -205,7 +207,7 @@ async def get_or_create_user(userid: int, username: str = None) -> User:
             lnuname.replace(" ", "_")
             lnuname = lnuname[:15]
 
-            if re.search("^[a-z0-9\-_\.]+$", lnuname):
+            if re.search("^[a-z0-9\-_\.]+$", lnuname):  # noqa: W605
                 payload["username"] = lnuname
             else:
                 logging.info(f"Username not allowed for lnaddress {lnuname}")

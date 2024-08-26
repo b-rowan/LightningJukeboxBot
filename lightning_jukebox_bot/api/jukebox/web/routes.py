@@ -42,7 +42,7 @@ async def web_search(request: Request):
     # validate that chat_id is a digit
     try:
         chat_id = int(chat_id)
-    except:
+    except ValueError:
         return {"status": 400, "message": "Incomplete request. Failed to cast chat_id"}
 
     # get form
@@ -129,7 +129,7 @@ async def web_add(request: Request):
     # validate that chat_id is a digit
     try:
         chat_id = int(chat_id)
-    except:
+    except ValueError:
         logger.warning("chat_id is not an integer")
         return {"status": 400, "message": "Incomplete request"}
 

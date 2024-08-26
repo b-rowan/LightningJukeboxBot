@@ -4,10 +4,13 @@ import random
 
 import aiomqtt
 import spotipy
+from aiomqtt import MqttError
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from lightning_jukebox_bot.application import invoicing, spotify, users
+from lightning_jukebox_bot.application.invoicing.helper import Invoice
 from lightning_jukebox_bot.application.telegram import app, helper, messages
 from lightning_jukebox_bot.application.telegram.helper import TelegramCommand
 from lightning_jukebox_bot.settings import config
@@ -39,7 +42,7 @@ def debounce(func):
             # delete the command from the user
             try:
                 await update.message.delete()
-            except:
+            except TelegramError:
                 logger.warning("Failed to delete message")
 
     return wrapper
@@ -61,7 +64,7 @@ def adminonly(func):
                     "creator",
                 ]:
                     admin = True
-        if admin == True:
+        if admin:
             await func(update, context)
             return
 
@@ -82,7 +85,8 @@ def adminonly(func):
 async def delete_message(context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.job.data["message"].delete()
-    except:
+    # TODO: replace bare except
+    except:  # noqa: E722
         logging.warning("Could not delete message")
 
 
@@ -193,7 +197,7 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         payment_required = False
 
     # if no payment required, add the tracks to the queue one by one
-    if payment_required == False:
+    if not payment_required:
         spotify.helper.add_to_queue(sp, spotify_uri_list)
 
         for uri in spotify_uri_list:
@@ -205,7 +209,7 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                     parse_mode="HTML",
                     text=f"@{update.effective_user.username} added '{tracktitle}' to the queue.",
                 )
-            except:
+            except TelegramError:
                 pass
 
             try:
@@ -214,13 +218,13 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                     parse_mode="HTML",
                     text=f"You added '{tracktitle}' to the queue for {amount_to_pay} sats.",
                 )
-            except:
+            except TelegramError:
                 pass
 
             try:
                 async with aiomqtt.Client("localhost") as client:
                     await client.publish(f"{update.effective_chat.id}/added_to_queue", payload=tracktitle)
-            except:
+            except MqttError:
                 logging.error("Exception when publishing queue add to mqtt")
                 pass
 
@@ -251,7 +255,7 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     payment_result = await invoicing.helper.pay_invoice(invoice.user, invoice)
 
     # if payment success
-    if payment_result["result"] == True:
+    if payment_result["result"]:
         spotify.helper.add_to_queue(sp, spotify_uri_list)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -264,13 +268,13 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 parse_mode="HTML",
                 text=f"You paid {amount_to_pay} sats for {invoice_title}.",
             )
-        except:
+        except TelegramError:
             logging.info("Could not send message to user")
 
         try:
             async with aiomqtt.Client("localhost") as client:
                 await client.publish(f"{update.effective_chat.id}/added_to_queue", payload=invoice_title)
-        except:
+        except MqttError:
             logging.error("Exception when publishing queue add to mqtt")
             pass
 
@@ -289,7 +293,8 @@ async def callback_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # we failed paying the invoice, popup the lnurlp
     message = await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=f"@{update.effective_user.username} add '{invoice_title}' to the queue?\n\nClick to pay below or fund the bot with /fund@Jukebox_Lightning_bot.",
+        text=f"@{update.effective_user.username} add '{invoice_title}' to the queue?"
+        f"\n\nClick to pay below or fund the bot with /fund@Jukebox_Lightning_bot.",
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -340,7 +345,7 @@ async def check_invoice_callback(context: ContextTypes.DEFAULT_TYPE):
         return
 
     # check if invoice was paid
-    if await invoicing.helper.invoice_paid(invoice) == True:
+    if await invoicing.helper.invoice_paid(invoice):
         await callback_paid_invoice(invoice)
         return
 
@@ -350,7 +355,7 @@ async def check_invoice_callback(context: ContextTypes.DEFAULT_TYPE):
         await invoicing.helper.delete_invoice(invoice.payment_hash)
         try:
             await context.bot.delete_message(invoice.chat_id, invoice.message_id)
-        except:
+        except TelegramError:
             pass
     else:
         app.job_queue.run_once(check_invoice_callback, 15, data=invoice)
@@ -388,7 +393,8 @@ async def callback_spotify(context: ContextTypes.DEFAULT_TYPE) -> None:
             try:
                 sp = spotipy.Spotify(auth_manager=auth_manager)
                 currenttrack = sp.current_user_playing_track()
-            except:
+            # TODO: replace bare except
+            except:  # noqa: E722
                 # logging.info("Exception while querying the current playing track at spotify")
                 continue
 
@@ -413,14 +419,14 @@ async def callback_spotify(context: ContextTypes.DEFAULT_TYPE) -> None:
                         await context.bot.editMessageText(title, chat_id=chat_id, message_id=message_id)
                         now_playing_message[chat_id] = [message_id, title]
                         logging.info(f"Now playing {title} in chat {chat_id}")
-                    except:
+                    except TelegramError:
                         # logging.error("Exception when refreshing now playing")
                         pass
 
                     try:
                         async with aiomqtt.Client("localhost") as client:
                             await client.publish(f"{chat_id}/now_playing", payload=title)
-                    except:
+                    except MqttError:
                         logging.error("Exception when publishing current track to mqtt")
                         pass
 
@@ -430,9 +436,10 @@ async def callback_spotify(context: ContextTypes.DEFAULT_TYPE) -> None:
                     message = await context.bot.send_message(text=title, chat_id=chat_id)
                     await context.bot.pin_chat_message(chat_id=chat_id, message_id=message.id)
                     now_playing_message[chat_id] = [message.id, title]
-                except:
+                except TelegramError:
                     logging.error("Exception when sending message to group")
-    except:
+    # TODO: replace bare except
+    except:  # noqa: E722
         logging.error("Unhandled exception in callback_spotify")
     finally:
         if interval < 30 or interval > 300:
@@ -452,7 +459,7 @@ async def callback_paid_invoice(invoice: Invoice):
         logging.error("Invoice chat_id is None")
         return
 
-    if await invoicing.helper.delete_invoice(invoice.payment_hash) == False:
+    if not await invoicing.helper.delete_invoice(invoice.payment_hash):
         logging.info("invoicing.helper.delete_invoice returned False")
         return
 
@@ -464,7 +471,7 @@ async def callback_paid_invoice(invoice: Invoice):
     try:
         logging.info(f"Trying to delete chat_id {invoice.chat_id}, messageid {invoice.message_id}")
         await app.bot.delete_message(invoice.chat_id, invoice.message_id)
-    except:
+    except TelegramError:
         pass
 
     # add to the queue and inform others
@@ -477,32 +484,34 @@ async def callback_paid_invoice(invoice: Invoice):
             parse_mode="HTML",
             text=f"'{invoice.title}' was added to the queue.",
         )
-    except:
+    except TelegramError:
         logging.error("Could not  send message to the group that track was added to the queue")
 
     try:
         async with aiomqtt.Client("localhost") as client:
             await client.publish(f"{invoice.chat_id}/added_to_queue", payload=invoice.title)
-    except:
+    except MqttError:
         logging.error("Exception when publishing queue add to mqtt")
         pass
 
-    if False:
-        try:
-            await application.bot.send_message(
-                chat_id=invoice.user.userid,
-                parse_mode="HTML",
-                text=f"You paid {invoice.amount_to_pay} sats for {invoice.title}.",
-            )
-        except:
-            logging.info("Could not send individual message to user that")
+    # TODO: Unreachable?
+    # if False:
+    #     try:
+    #         await app.bot.send_message(
+    #             chat_id=invoice.user.userid,
+    #             parse_mode="HTML",
+    #             text=f"You paid {invoice.amount_to_pay} sats for {invoice.title}.",
+    #         )
+    #     except TelegramError:
+    #         logging.info("Could not send individual message to user that")
 
     # make donation to the bot
-    jukeboxbot = await userhelper.get_or_create_user(settings.bot_id)
-    donator = await userhelper.get_or_create_user(invoice.recipient.userid)
+    jukeboxbot = await users.helper.get_or_create_user(config.bot_id)
+    donator = await users.helper.get_or_create_user(invoice.recipient.userid)
     donation_amount: int = await spotify.helper.get_donation_fee(invoice.chat_id)
     donation_amount = min(donation_amount, invoice.amount_to_pay)
     donation_invoice = await invoicing.helper.create_invoice(jukeboxbot, donation_amount, "donation to the bot")
-    result = await invoicing.helper.pay_invoice(donator, donation_invoice)
+    # TODO: unused
+    result = await invoicing.helper.pay_invoice(donator, donation_invoice)  # noqa: F841
 
     return

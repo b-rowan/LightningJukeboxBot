@@ -7,6 +7,7 @@ import qrcode
 import spotipy
 from PIL import Image
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from lightning_jukebox_bot.application import invoicing, spotify, telegram, users
@@ -31,7 +32,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type == "private":
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Execute the /add command in the group instead of the private chat.",
+            text="Execute the /add command in the group instead of the private chat.",
         )
         return
 
@@ -219,7 +220,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             statsText += f" - {group['groupid']} : @{group['owner'].username}\n"
         else:
             statsText += f" - {group['groupid']} : Unknown owner\n"
-    message = await context.bot.send_message(chat_id=update.effective_chat.id, text=statsText)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=statsText)
 
 
 # get the current balance
@@ -234,7 +235,7 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             chat_id=update.effective_chat.id,
             text=messages.BALANCE_IN_GROUP,
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton(f"Take me there", url=f"https://t.me/{bot_me.username}")]]
+                [[InlineKeyboardButton("Take me there", url=f"https://t.me/{bot_me.username}")]]
             ),
         )
 
@@ -281,7 +282,7 @@ async def disconnect(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     result = await spotify.helper.delete_auth_manager(update.effective_chat.id)
 
     # get an auth manager, if no auth manager is available, dump a message
-    if result == True:
+    if result:
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
             parse_mode="HTML",
@@ -331,7 +332,7 @@ To connect this bot to your spotify account, you have to create an app in the de
 
 5. Give the '/couple' command in the group that you want to connect to your account. That will redirect you to an authorisation page.
 
-""",
+""",  # noqa: E501
         )
 
         # check that client_id is not None
@@ -368,7 +369,8 @@ To connect this bot to your spotify account, you have to create an app in the de
         if auth_manager is not None:
             message = await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text="A player is already connected to this group chat. disconnect it first using the /decouple command before connecting a new one",
+                text="A player is already connected to this group chat. "
+                "Disconnect it first using the /decouple command before connecting a new one",
             )
             context.job_queue.run_once(
                 delete_message,
@@ -414,7 +416,7 @@ To connect this bot to your spotify account, you have to create an app in the de
                 [
                     [
                         InlineKeyboardButton(
-                            f"Authorize player",
+                            "Authorize player",
                             url=auth_manager.get_authorize_url(state=state),
                         )
                     ]
@@ -425,9 +427,9 @@ To connect this bot to your spotify account, you have to create an app in the de
         # send a message that configuration is required
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Additional configuration is required, execute this command in a private chat with me.",
+            text="Additional configuration is required, execute this command in a private chat with me.",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton(f"Take me there", url=f"https://t.me/{bot_me.username}")]]
+                [[InlineKeyboardButton("Take me there", url=f"https://t.me/{bot_me.username}")]]
             ),
         )
 
@@ -445,7 +447,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type == "private":
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"The /price command only works in a group chat.",
+            text="The /price command only works in a group chat.",
         )
         return
 
@@ -466,11 +468,14 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # parse and validate the price command
-    result = re.search("/price\s+([0-9]+)\s+([0-9]+)$", update.message.text)
+    result = re.search("/price\s+([0-9]+)\s+([0-9]+)$", update.message.text)  # noqa: W605
     if result is None:
-        message = await context.bot.send_message(
+        await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Use command as follows: /price <price> <donation>\n<price> is the track price in sats\n<donation> is the amount in sats donated to the bot per reqested track. The donation is substracted from the track price.",
+            text="Use command as follows: /price <price> <donation>\n"
+            "<price> is the track price in sats\n"
+            "<donation> is the amount in sats donated to the bot per reqested track. "
+            "The donation is subtracted from the track price.",
         )
         return
 
@@ -500,9 +505,9 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 @debounce
 async def queue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type == "private":
-        message = await context.bot.send_message(
+        await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Execute the /queue command in the group instead of the private chat.",
+            text="Execute the /queue command in the group instead of the private chat.",
         )
         return
 
@@ -524,7 +529,8 @@ async def queue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # create spotify instance
     try:
         sp = spotipy.Spotify(auth_manager=auth_manager)
-    except:
+    # TODO: bare except
+    except:  # noqa: E722
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id, text="Failed to connect to music player"
         )
@@ -538,7 +544,8 @@ async def queue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # get the current track
     try:
         track = sp.current_user_playing_track()
-    except:
+    # TODO: bare except
+    except:  # noqa: E722
         track = None
 
     title = "Nothing is playing at the moment"
@@ -548,7 +555,8 @@ async def queue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # query the queue
     try:
         result = sp.queue()
-    except:
+    # TODO: bare except
+    except:  # noqa: E722
         message = await context.bot.send_message(chat_id=update.effective_chat.id, text="Failed to retrieve queue")
         context.job_queue.run_once(
             delete_message,
@@ -590,11 +598,11 @@ async def service(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.info(f"User {userid} is not a superadmin. Access to stats denied")
         return
 
-    result = re.search("^/service \S.*", update.message.text)
+    result = re.search("^/service \S.*", update.message.text)  # noqa: W605
     if result is None:
-        message = await context.bot.send_message(
+        await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Use the /service command as follows: /service <message>\nThe message is sent to all owners of bot",
+            text="Use the /service command as follows: /service <message>\nThe message is sent to all owners of bot",
         )
         return
 
@@ -610,18 +618,21 @@ async def service(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         # send a message each owner
         try:
-            message = await context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=group["owner"].userid,
                 text=f"Service message from the Jukebox Bot:\n\n{msgstr}\n\nThank you!",
             )
             num += 1
-        except:
+        except TelegramError:
             pass
 
     # send a message each owner
-    message = await context.bot.send_message(
+    await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=f"The following message was sent to {num} users:\n\nService message from the Jukebox Bot:\n\n{msgstr}\n\nThank you!",
+        text=f"The following message was sent to {num} users:\n\n"
+        f"Service message from the Jukebox Bot:\n\n"
+        f"{msgstr}\n\n"
+        f"Thank you!",
     )
 
 
@@ -634,9 +645,10 @@ async def spotify_config(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # direct the user to their private chat
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Like keeping your mnenomic seedphrase offline, it is better to perform these actions in a private chat with me.",
+            text="Like keeping your mnenomic seedphrase offline, "
+            "it is better to perform these actions in a private chat with me.",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton(f"Take me there", url=f"https://t.me/{bot_me.username}")]]
+                [[InlineKeyboardButton("Take me there", url=f"https://t.me/{bot_me.username}")]]
             ),
         )
 
@@ -651,9 +663,9 @@ async def spotify_config(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # TODO: This doesnt exist?
     sps = await spotify.helper.get_spotify_config(update.effective_user.id)
 
-    result = re.search("/(setclientid|setclientsecret)\s+([a-z0-9]+)\s*$", update.message.text)
+    result = re.search("/(setclientid|setclientsecret)\s+([a-z0-9]+)\s*$", update.message.text)  # noqa: W605
     if result is None:
-        message = await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Incorrect usage. ")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Incorrect usage. ")
         return
 
     # after validation
@@ -669,11 +681,12 @@ async def spotify_config(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         sps.client_secret = value
         bSave = True
 
-    if bSave == True:
+    if bSave:
+        # TODO: doesnt exist
         await spotify.helper.save_spotify_config(sps)
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Settings updated. Type /couple for current config and instructions.",
+            text="Settings updated. Type /couple for current config and instructions.",
         )
 
 
@@ -693,8 +706,9 @@ async def fund(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             [
                 [
                     InlineKeyboardButton(
-                        f"Fund sats",
-                        url=f"https://{config.domain}/jukebox/fund?command={helper.add_command(TelegramCommand(update.effective_user.id,'FUND'))}",
+                        "Fund sats",
+                        url=f"https://{config.domain}/jukebox/fund"
+                        f"?command={helper.add_command(TelegramCommand(update.effective_user.id,'FUND'))}",
                     )
                 ]
             ]
@@ -709,7 +723,7 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type == "private":
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Execute the /history command in the group instead of the private chat.",
+            text="Execute the /history command in the group instead of the private chat.",
         )
         return
 
@@ -729,7 +743,8 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # create spotify instance
-    sp = spotipy.Spotify(auth_manager=auth_manager)
+    # TODO: unused
+    # sp = spotipy.Spotify(auth_manager=auth_manager)
 
     text = "Track history:\n"
     history = await spotify.helper.get_history(update.effective_chat.id, 20)
@@ -753,9 +768,10 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Like keeping your mnenomic seedphrase offline, it is better to request your lndhub link in a private chat with me.",
+            text="Like keeping your mnenomic seedphrase offline, "
+            "it is better to request your lndhub link in a private chat with me.",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton(f"Take me there", url=f"https://t.me/{bot_me.username}")]]
+                [[InlineKeyboardButton("Take me there", url=f"https://t.me/{bot_me.username}")]]
             ),
         )
 
@@ -775,7 +791,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await context.bot.send_photo(
             update.effective_chat.id,
             file,
-            caption=f"Scan this QR code with an lndhub compatible wallet like BlueWallet or Zeus.",
+            caption="Scan this QR code with an lndhub compatible wallet like BlueWallet or Zeus.",
             parse_mode="HTML",
         )
 
@@ -789,7 +805,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # pay a lightning invoice
 @debounce
 async def pay(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    result = re.search("/refund\s+(lnbc[a-z0-9]+)\s*$", update.message.text)
+    result = re.search("/refund\s+(lnbc[a-z0-9]+)\s*$", update.message.text)  # noqa: W605
     if result is None:
         await context.bot.send_message(
             chat_id=update.effective_user.id,
@@ -827,7 +843,9 @@ async def dj(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.reply_to_message is None:
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"The /dj command only works as a reply to another user. If no amount is specified, the price for a track, {await spotify.helper.get_price(update.effective_chat.id)} is sent.",
+            text=f"The /dj command only works as a reply to another user. "
+            f"If no amount is specified, the price for a track, "
+            f"{await spotify.helper.get_price(update.effective_chat.id)} is sent.",
         )
         context.job_queue.run_once(
             delete_message,
@@ -838,7 +856,7 @@ async def dj(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # parse the amount to be paid
     amount = await spotify.helper.get_price(update.effective_chat.id)
-    result = re.search("/[a-z]+(\s+([0-9]+))?\s*$", update.message.text)
+    result = re.search("/[a-z]+(\s+([0-9]+))?\s*$", update.message.text)  # noqa: W605
     if result is not None:
         amount = result.groups()[1]
         if amount is None:
@@ -853,7 +871,7 @@ async def dj(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if balance < amount:
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Insufficient balance, /fund your balance first to /dj another user.",
+            text="Insufficient balance, /fund your balance first to /dj another user.",
         )
         context.job_queue.run_once(
             delete_message,
@@ -875,7 +893,7 @@ async def dj(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # pay the invoice
     result = await invoicing.helper.pay_invoice(sender, invoice)
-    if result["result"] == True:
+    if result["result"]:
         # send message in the group chat
         message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -886,27 +904,27 @@ async def dj(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # send a message in the private chat
         if not update.message.reply_to_message.from_user.is_bot:
             try:
-                message = await context.bot.send_message(
+                await context.bot.send_message(
                     chat_id=recipient.userid,
                     text=f"Received {amount} sats from @{sender.username}.",
                 )
-            except:
+            except TelegramError:
                 logging.info("Could not send message to user, probably not allowed")
         else:
             logging.info(f"@{sender.username} is sending {amount} sats to the bot")
 
         # send a message in the private chat
         try:
-            message = await context.bot.send_message(
+            await context.bot.send_message(
                 chat_id=sender.userid,
                 text=f"Sent {amount} sats to  @{recipient.username}.",
             )
-        except:
+        except TelegramError:
             logging.info("Could not send message to sender user, probably not allowed")
 
         logging.info(f"User {sender.userid} sent {amount} sats to {recipient.userid}")
     else:
-        message = await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Payment failed. Sorry.")
+        message = await context.bot.send_message(chat_id=update.effective_chat.id, text="Payment failed. Sorry.")
         context.job_queue.run_once(
             delete_message,
             config.delete_message_timeout_short,
@@ -919,8 +937,6 @@ async def web(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     return the Web URL where tracks can be requested using a browser
     """
-    userid: int = update.effective_user.id
-
     if update.message.chat.type == "private":
         return
 
@@ -944,7 +960,8 @@ async def web(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         message = await context.bot.send_photo(
             update.effective_chat.id,
             file,
-            caption=f"Access this Jukebox directly at the following URL: {jukebox_url}. Pro tip: print out this image and scan it with your phone.",
+            caption=f"Access this Jukebox directly at the following URL: {jukebox_url}. "
+            f"Pro tip: print out this image and scan it with your phone.",
             parse_mode="HTML",
         )
 

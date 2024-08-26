@@ -83,7 +83,8 @@ class LNbits:
     # delete user and their wallets
     async def deleteUser(self, lnbitsuserid):
         async with httpx.AsyncClient() as client:
-            response = await client.delete(
+            # TODO: unused
+            await client.delete(
                 f"{self.protocol}://{self.host}/usermanager/api/v1/users/{lnbitsuserid}",
                 headers={"X-Api-Key": self._admin_adminkey},
             )
@@ -109,9 +110,15 @@ class LNbits:
     # enable extension
     async def enableExtension(self, name, lnbitsuserid):
         # enable extension for user wallet
+        url = (
+            f"{self.protocol}://{self.host}/usermanager/api/v1/extensions"
+            f"?extension={name}"
+            f"&userid={lnbitsuserid}"
+            f"&active=true"
+        )
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.protocol}://{self.host}/usermanager/api/v1/extensions?extension={name}&userid={lnbitsuserid}&active=true",
+                url,
                 headers={"X-Api-Key": self._admin_invoicekey},
             )
             if response.status_code == 200:
@@ -150,14 +157,15 @@ class LNbits:
             )
             result = response.json()
 
-            if not "id" in result:
+            if "id" not in result:
                 if result["detail"].startswith("Username already exists."):
                     logging.warning(f"Username already exists {payload['username']}, retrying without username")
                     del payload["username"]
                     return await self.createLnurlp(adminkey, payload)
                 else:
                     logging.error(
-                        f"Could not create Lnurlpay link for payload '{json.dumps(payload)}'  the response was: '{json.dumps(result)}'"
+                        f"Could not create Lnurlpay link for payload '{json.dumps(payload)}' "
+                        f"the response was: '{json.dumps(result)}'"
                     )
                     return None
             else:
@@ -187,7 +195,7 @@ class LNbits:
                 )
 
                 jsobj = json.loads(response.text)
-                if jsobj["paid"] == True:
+                if jsobj["paid"]:
                     return True
             except httpx.ReadTimeout:
                 logging.warning("LNbits read timeout")

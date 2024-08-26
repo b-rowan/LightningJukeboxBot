@@ -3,9 +3,15 @@
     <div class="image-container">
         <div class="image-content">
             <img src="{{ request.url_for('static', path='/img/jukeboxbot_fund.png') }}"
-                 alt="JukeboxBot" />
+                 alt="JukeboxBot"
+                 width="100%"
+                 height="100%" />
             <div class="qr-code-container">
-                <img id="qr-code-image" alt="QR code image" lnurl="{{ lnurl }}">
+                <img id="qr-code-image"
+                     alt="QR code image"
+                     lnurl="{{ lnurl }}"
+                     width="100%"
+                     height="100%" />
             </div>
             <button class="copy-data" aria-label="Copy LNRUL"></button>
         </div>

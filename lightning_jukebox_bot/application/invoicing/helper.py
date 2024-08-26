@@ -3,6 +3,8 @@ import logging
 
 import aiomqtt
 import spotipy
+from aiomqtt import MqttError
+from telegram.error import TelegramError
 
 from lightning_jukebox_bot.application import redis, spotify, telegram, users
 from lightning_jukebox_bot.application.users.helper import User
@@ -75,7 +77,7 @@ async def pay_invoice(user: User, invoice: Invoice):
     assert invoice is not None
     result = await config.lnbits.payInvoice(invoice.payment_request, user.adminkey)
 
-    if result["result"] == True:
+    if result["result"]:
         return {"result": True, "detail": "Payment success"}
     else:
         retval = {"result": False, "detail": result["detail"]}
@@ -99,7 +101,7 @@ async def delete_invoice(payment_hash: str) -> bool:
 
 async def invoice_paid(invoice: Invoice) -> bool:
     result = await config.lnbits.checkInvoice(invoice.recipient.invoicekey, invoice.payment_hash)
-    if result == True:
+    if result:
         return True
     else:
         return False
@@ -131,7 +133,7 @@ async def callback_paid_invoice(invoice: Invoice):
         logging.error("Invoice chat_id is None")
         return
 
-    if await delete_invoice(invoice.payment_hash) == False:
+    if not await delete_invoice(invoice.payment_hash):
         logging.info("invoicehelper.delete_invoice returned False")
         return
 
@@ -143,7 +145,7 @@ async def callback_paid_invoice(invoice: Invoice):
     try:
         logging.info(f"Trying to delete chat_id {invoice.chat_id}, messageid {invoice.message_id}")
         await telegram.app.bot.delete_message(invoice.chat_id, invoice.message_id)
-    except:
+    except TelegramError:
         pass
 
     # add to the queue and inform others
@@ -156,13 +158,13 @@ async def callback_paid_invoice(invoice: Invoice):
             parse_mode="HTML",
             text=f"'{invoice.title}' was added to the queue.",
         )
-    except:
+    except TelegramError:
         logging.error("Could not  send message to the group that track was added to the queue")
 
     try:
         async with aiomqtt.Client("localhost") as client:
             await client.publish(f"{invoice.chat_id}/added_to_queue", payload=invoice.title)
-    except:
+    except MqttError:
         logging.error("Exception when publishing queue add to mqtt")
         pass
 

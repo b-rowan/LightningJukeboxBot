@@ -26,12 +26,12 @@ async def spotify_callback(request: Request):
         return {"success": False}
 
     code = request.query_params["code"]
-    if not re.search("^[A-Za-z0-9\-\_]+$", code):
+    if not re.search("^[A-Za-z0-9\-\_]+$", code):  # noqa: W605
         logger.warning("authorisation code does not match regex")
         return {"success": False}
 
     state = request.query_params["state"]
-    if not re.search("^[0-9A-Za-z\-]+", state):
+    if not re.search("^[0-9A-Za-z\-]+", state):  # noqa: W605
         logger.warning("state parameter does not match regex")
         return {"success": False}
 

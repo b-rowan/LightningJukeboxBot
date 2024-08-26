@@ -26,7 +26,8 @@ async def get_jukebox_groups() -> dict:
         owner = None
         try:
             owner = await users.helper.get_group_owner(chatid)
-        except:
+        # TODO: replace bare except
+        except:  # noqa: E722
             logging.error("problem getting group stats")
 
         result["group"].append({"groupid": chatid, "owner": owner})
